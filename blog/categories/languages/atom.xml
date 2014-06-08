@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Languages | My Octopress Blog]]></title>
+  <link href="http://codeforgood.github.io/blog/categories/languages/atom.xml" rel="self"/>
+  <link href="http://codeforgood.github.io/"/>
+  <updated>2014-06-07T23:26:01-04:00</updated>
+  <id>http://codeforgood.github.io/</id>
+  <author>
+    <name><![CDATA[Your Name]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Hands on Golang]]></title>
+    <link href="http://codeforgood.github.io/blog/2014/06/07/trying-my-hands-on-golang-exiting-language/"/>
+    <updated>2014-06-07T16:44:55-04:00</updated>
+    <id>http://codeforgood.github.io/blog/2014/06/07/trying-my-hands-on-golang-exiting-language</id>
+    <content type="html"><![CDATA[<p>I am starting to learn Go and I feel the best way to learn is by sharing. Lets go through a simple example to demonstrate the power of Go</p>
+
+<h5>Problem &ndash; Sum of numbers from 1 to N</h5>
+
+<p>To explore the power of Go we will not use <a href="http://en.wikipedia.org/wiki/1_%2B_2_%2B_3_%2B_4_%2B_%E2%8B%AF" title="Summation Series">Summation series</a></p>
+
+<p>Typical way to sum 1 to N numbers in Python
+<div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>Sum of numbers from 1 to 99 in python &ndash; sum.go </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="nx">def</span> <span class="nx">sum</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">):&lt;</span><span class="o">/</span><span class="nx">p</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">pre</span><span class="p">&gt;&lt;</span><span class="nx">code</span><span class="p">&gt;</span><span class="nx">sum</span> <span class="p">=</span> <span class="mi">0</span>
+</span><span class='line'><span class="k">for</span> <span class="nx">i</span> <span class="nx">in</span> <span class="k">range</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">):</span>
+</span><span class='line'>    <span class="nx">sum</span> <span class="o">+=</span> <span class="nx">i</span>
+</span><span class='line'><span class="k">return</span> <span class="nx">sum</span>
+</span><span class='line'><span class="p">&lt;</span><span class="o">/</span><span class="nx">code</span><span class="p">&gt;&lt;</span><span class="o">/</span><span class="nx">pre</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">p</span><span class="p">&gt;</span><span class="nx">print</span> <span class="nx">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>The above same problem when translated to Go looks like this
+<div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>Sum of numbers from 1 to 99 in Go (serial version) &ndash; sum_serial.go </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="kn">package</span> <span class="nx">main</span><span class="p">&lt;</span><span class="o">/</span><span class="nx">p</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">p</span><span class="p">&gt;</span><span class="kn">import</span> <span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">fmt</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;&lt;</span><span class="o">/</span><span class="nx">p</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">p</span><span class="p">&gt;</span><span class="kd">func</span> <span class="nx">sum</span><span class="p">(</span><span class="nx">a</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">b</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">{&lt;</span><span class="o">/</span><span class="nx">p</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">pre</span><span class="p">&gt;&lt;</span><span class="nx">code</span><span class="p">&gt;</span><span class="nx">sum</span> <span class="o">:=</span> <span class="mi">0</span>
+</span><span class='line'><span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="nx">a</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span> <span class="nx">b</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+</span><span class='line'>    <span class="nx">sum</span> <span class="o">+=</span> <span class="nx">i</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'><span class="k">return</span> <span class="nx">sum</span>
+</span><span class='line'><span class="p">&lt;</span><span class="o">/</span><span class="nx">code</span><span class="p">&gt;&lt;</span><span class="o">/</span><span class="nx">pre</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">p</span><span class="p">&gt;}&lt;</span><span class="o">/</span><span class="nx">p</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">p</span><span class="p">&gt;</span><span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{&lt;</span><span class="o">/</span><span class="nx">p</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">pre</span><span class="p">&gt;&lt;</span><span class="nx">code</span><span class="p">&gt;</span><span class="nx">result</span> <span class="o">:=</span> <span class="nx">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+</span><span class='line'><span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span>
+</span><span class='line'><span class="p">&lt;</span><span class="o">/</span><span class="nx">code</span><span class="p">&gt;&lt;</span><span class="o">/</span><span class="nx">pre</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">p</span><span class="p">&gt;}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div>
+Both the above solutions has linear complexity &ndash; O(n), runs in a single thread What if we want to sum from 1 to 1 million ???</p>
+
+<p>Go provides a way to do this computation much faster and easier using <a href="https://gobyexample.com/goroutines">goroutines</a> and <a href="https://gobyexample.com/channels">channels</a></p>
+
+<pre><code>- The above sum function can be changed to return a channel with a result once available
+- The main method can fork multiple sum methods as goroutines asking to sum different ranges
+- The main method will grab the results from the channels and will return the sum
+</code></pre>
+
+<p>Theoretically, If we divide the array into 2 halves and sum using dedicated goroutines, we can get a speed up of twice, assuming multiple cores are available to run the routines in parallel</p>
+
+<p>The below go snippet shows the usage of goroutines and channels to achieve parallel computation
+<div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>Sum of numbers from 1 to 99 in Go (parallel version) &ndash; sum_parallel.go </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="kn">package</span> <span class="nx">main</span><span class="p">&lt;</span><span class="o">/</span><span class="nx">p</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">p</span><span class="p">&gt;</span><span class="kn">import</span> <span class="o">&amp;</span><span class="nx">ldquo</span><span class="p">;</span><span class="nx">fmt</span><span class="o">&amp;</span><span class="nx">rdquo</span><span class="p">;&lt;</span><span class="o">/</span><span class="nx">p</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">p</span><span class="p">&gt;</span><span class="kd">func</span> <span class="nx">sum</span><span class="p">(</span><span class="nx">start</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">end</span> <span class="kt">int</span><span class="p">)</span> <span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span><span class="o">-</span><span class="kd">chan</span> <span class="kt">int</span><span class="p">{&lt;</span><span class="o">/</span><span class="nx">p</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">pre</span><span class="p">&gt;&lt;</span><span class="nx">code</span><span class="p">&gt;</span><span class="nx">out</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kt">int</span><span class="p">)</span>
+</span><span class='line'><span class="c1">//goroutine</span>
+</span><span class='line'><span class="k">go</span> <span class="kd">func</span><span class="p">(){</span>
+</span><span class='line'>    <span class="nx">sum</span> <span class="o">:=</span> <span class="mi">0</span>
+</span><span class='line'>    <span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="nx">start</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span> <span class="nx">end</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
+</span><span class='line'>        <span class="nx">sum</span> <span class="o">+=</span> <span class="nx">i</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>    <span class="nx">out</span> <span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span><span class="o">-</span> <span class="nx">sum</span>
+</span><span class='line'>    <span class="nb">close</span><span class="p">(</span><span class="nx">out</span><span class="p">)</span>
+</span><span class='line'><span class="p">}()</span>
+</span><span class='line'><span class="k">return</span> <span class="nx">out</span>
+</span><span class='line'><span class="p">&lt;</span><span class="o">/</span><span class="nx">code</span><span class="p">&gt;&lt;</span><span class="o">/</span><span class="nx">pre</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">p</span><span class="p">&gt;}&lt;</span><span class="o">/</span><span class="nx">p</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">p</span><span class="p">&gt;</span><span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{&lt;</span><span class="o">/</span><span class="nx">p</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">pre</span><span class="p">&gt;&lt;</span><span class="nx">code</span><span class="p">&gt;</span><span class="nx">c1</span> <span class="o">:=</span> <span class="nx">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span> <span class="c1">// call to sum returns immediately with a channel</span>
+</span><span class='line'><span class="nx">c2</span> <span class="o">:=</span> <span class="nx">sum</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+</span><span class='line'><span class="nx">sum_first_half</span><span class="p">,</span> <span class="nx">sum_second_half</span> <span class="o">:=</span> <span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span><span class="o">-</span><span class="nx">c1</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">lt</span><span class="p">;</span><span class="o">-</span><span class="nx">c2</span>
+</span><span class='line'><span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">sum_first_half</span> <span class="o">+</span> <span class="nx">sum_second_half</span><span class="p">)</span>
+</span><span class='line'><span class="p">&lt;</span><span class="o">/</span><span class="nx">code</span><span class="p">&gt;&lt;</span><span class="o">/</span><span class="nx">pre</span><span class="p">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="p">&lt;</span><span class="nx">p</span><span class="p">&gt;}</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<hr />
+
+<h5>References</h5>
+
+<p>Really interesting article about why <a href="http://dave.cheney.net/2014/06/07/five-things-that-make-go-fast">Go is faster than other languages</a></p>
+]]></content>
+  </entry>
+  
+</feed>
