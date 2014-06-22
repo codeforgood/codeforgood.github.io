@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: architecture, | Eden Space]]></title>
+  <link href="http://codeforgood.github.io/blog/categories/architecture/atom.xml" rel="self"/>
+  <link href="http://codeforgood.github.io/"/>
+  <updated>2014-06-21T22:54:06-04:00</updated>
+  <id>http://codeforgood.github.io/</id>
+  <author>
+    <name><![CDATA[Sadish Ravi]]></name>
+    <email><![CDATA[sadish.r@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Realtime Computation and Charting with Go and d3]]></title>
+    <link href="http://codeforgood.github.io/blog/2014/06/21/realtime-computation-and-charting-with-go/"/>
+    <updated>2014-06-21T15:23:04-04:00</updated>
+    <id>http://codeforgood.github.io/blog/2014/06/21/realtime-computation-and-charting-with-go</id>
+    <content type="html"><![CDATA[<p>Realtime web systems are always fun and challenging to build. To try my hands on this, I worked with a team and built a  realtime student assessment metrics dashboard during a 2 days hackathon. We built this using go, reveal, redis and d3.</p>
+
+<h4>What did we build?</h4>
+
+<p>At my current work, I have worked on building student assessment data processing systems. These are mostly batch based systems and the delay associated with them usually works out fine for our clients. But there are still unexplored use cases for realtime computations in education.</p>
+
+<p>The system that we built listens to a realtime feed (student assessment information), does various computations/aggregations in parallel and pushes the result to a result queue. The web socket application listens to this computation result feed and updates the dashboard in realtime</p>
+
+<h4>Parts of the system</h4>
+
+<h5>Realtime feed</h5>
+
+<p>we simulated a realtime feed of student assessment information using go. A goroutine reads a csv file and sends data to a go source feed channel at regular intervals</p>
+
+<h5>Computations</h5>
+
+<p>Bunch of goroutines listens to the above channel and performs some computation on the record in parallel. These computaitons are usually dependent on the computation result till now. We can do this either by storing the result in database temporarily or using a closure to keep track of result till now. Some calculations we implemented were</p>
+
+<pre><code>- Average score by school
+- Top performing schools in a district
+- Top performers in a grade across schools in a district
+- ....
+</code></pre>
+
+<p>Each of the above calculation was implemented as a goroutine and they push the result to a result channel as string. These routines listens to the source feed channel and runs as long the source closes it channel</p>
+
+<h5>Aggregator</h5>
+
+<p>Aggregator can be seen as the main routine which initiated all the above computation routines and listens for results on the output channel for each of the routines. The aggregator does 2 things</p>
+
+<pre><code>- publishes the current result from a computation to its own redis queue
+- Appends the result to a snapshot result list in redis.This is needed for initial state of the chart up on loading
+</code></pre>
+
+<h5>Socket server</h5>
+
+<p>The socket server was built using go and reveal framework. Its a very simple endpoint, which subscribes to each of the above redis computation queue and emits the data up the stack to browser as a message tagged with the chart on which it needs to be shown</p>
+
+<h5>D3 charts</h5>
+
+<p>The dashboard ui is built using d3 charts and each of the chart listens to a particular message on the socket connection and redraws themselves with new data</p>
+
+<h4>Putting together</h4>
+
+<p><img class="left" src="/images/dash/dash-arch.jpg" title="&lsquo;Dash Architecture&rsquo; &lsquo;Dash&rsquo;" ></p>
+]]></content>
+  </entry>
+  
+</feed>
