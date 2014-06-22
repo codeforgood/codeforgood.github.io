@@ -36,4 +36,4 @@ The dashboard ui is built using d3 charts and each of the chart listens to a par
 
 #### Putting together
 
-{% img left /images/dash/dash-arch.jpg 'Dash Architecture' 'Dash' %}
+{% img left /images/Dash/dash-arch.jpg 'Dash Architecture' 'Dash' %}
