@@ -4,7 +4,7 @@
   <title><![CDATA[Category: go, | Eden Space]]></title>
   <link href="http://codeforgood.github.io/blog/categories/go/atom.xml" rel="self"/>
   <link href="http://codeforgood.github.io/"/>
-  <updated>2014-06-21T23:18:25-04:00</updated>
+  <updated>2016-12-02T21:08:48-08:00</updated>
   <id>http://codeforgood.github.io/</id>
   <author>
     <name><![CDATA[Sadish Ravi]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Realtime Computation and Charting with Go and d3]]></title>
     <link href="http://codeforgood.github.io/blog/2014/06/21/realtime-computation-and-charting-with-go/"/>
-    <updated>2014-06-21T15:23:04-04:00</updated>
+    <updated>2014-06-21T12:23:04-07:00</updated>
     <id>http://codeforgood.github.io/blog/2014/06/21/realtime-computation-and-charting-with-go</id>
     <content type="html"><![CDATA[<p>Realtime web systems are always fun and challenging to build. To try my hands on this, I worked with a team and built a  realtime student assessment metrics dashboard during a 2 days hackathon. We built this using go, reveal, redis and d3.</p>
 

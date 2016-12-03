@@ -4,7 +4,7 @@
   <title><![CDATA[Category: languages | Eden Space]]></title>
   <link href="http://codeforgood.github.io/blog/categories/languages/atom.xml" rel="self"/>
   <link href="http://codeforgood.github.io/"/>
-  <updated>2014-06-21T23:18:25-04:00</updated>
+  <updated>2016-12-02T21:08:48-08:00</updated>
   <id>http://codeforgood.github.io/</id>
   <author>
     <name><![CDATA[Sadish Ravi]]></name>
@@ -16,7 +16,7 @@
   <entry>
     <title type="html"><![CDATA[Hands on Golang]]></title>
     <link href="http://codeforgood.github.io/blog/2014/06/07/trying-my-hands-on-golang-exiting-language/"/>
-    <updated>2014-06-07T16:44:55-04:00</updated>
+    <updated>2014-06-07T13:44:55-07:00</updated>
     <id>http://codeforgood.github.io/blog/2014/06/07/trying-my-hands-on-golang-exiting-language</id>
     <content type="html"><![CDATA[<p>I am starting to learn Go and I feel the best way to learn is by sharing. Lets go through a simple example to demonstrate the power of Go</p>
 
