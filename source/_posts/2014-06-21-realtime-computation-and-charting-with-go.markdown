@@ -3,6 +3,7 @@ layout: post
 title: "Realtime Computation and Charting with Go and d3"
 date: 2014-06-21 15:23:04 -0400
 comments: true
+author: Sadish Ravi
 categories: architecture, go, d3, realtime, computation, charting
 ---
 
