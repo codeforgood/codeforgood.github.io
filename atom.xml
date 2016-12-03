@@ -4,7 +4,7 @@
   <title><![CDATA[Eden Space]]></title>
   <link href="http://codeforgood.github.io/atom.xml" rel="self"/>
   <link href="http://codeforgood.github.io/"/>
-  <updated>2016-12-02T21:08:48-08:00</updated>
+  <updated>2016-12-03T11:04:23-08:00</updated>
   <id>http://codeforgood.github.io/</id>
   <author>
     <name><![CDATA[Sadish Ravi]]></name>
@@ -12,6 +12,102 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Iot bell: a doorbell using Aws iot button]]></title>
+    <link href="http://codeforgood.github.io/blog/2016/12/02/iot-doorbell-building-a-doorbell-using-aws-iot-button/"/>
+    <updated>2016-12-02T20:51:11-08:00</updated>
+    <id>http://codeforgood.github.io/blog/2016/12/02/iot-doorbell-building-a-doorbell-using-aws-iot-button</id>
+    <content type="html"><![CDATA[<p>A Doorbell for 20$ that slacks instead of ringing. This idea was given birth due to many reasons</p>
+
+<pre><code>- Our office floor was missing a doorbell for a long time
+- People with out key fob had to tail gate others after a long wait
+- We wanted to put to a use a spare aws iot button
+</code></pre>
+
+<h3>How it works?</h3>
+
+<p><img class="left" src="http://codeforgood.github.io/images/doorbell/doorbell-arch-diag.png" title="Doorbell Architecture" alt="doorbell"></p>
+
+<h3>Deep dive</h3>
+
+<h4>iot Button</h4>
+
+<p><a href="https://aws.amazon.com/iotbutton/">AWS iot button</a> is a simple device that triggers an  event upon clicking. Pretty much any piece of code/action can be executed by handling this event. <a href="https://www.amazon.com/dp/B01C7WE5WM">purchase aws iot button here</a>.</p>
+
+<h4>Slack webhook</h4>
+
+<p>We will be using a slack webhook url to post a message to slack. A webhook url can be configured and obtained from slack settings.</p>
+
+<h4>Lambda function</h4>
+
+<p>This a very simple python script that gets executed upon an iot event and posts a message to a slack channel.</p>
+
+<p>While creating a lambda function, select the trigger to be AWS IoT and enter the button device serial number to generate certificate and key. This will be used later to setup the button.</p>
+
+<p>The lambda function itself is pretty straightforward</p>
+
+<figure class='code'><figcaption><span>iotbell function - iotbell.py </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+</pre></td><td class='code'><pre><code class='py'><span class='line'><span class="n">HOOK_URL</span> <span class="o">=</span> <span class="s">&#39;&lt;webhook url from slack&gt;&#39;</span>
+</span><span class='line'><span class="n">SLACK_CHANNEL</span> <span class="o">=</span> <span class="s">&#39;&lt;slackchannel to post&gt;&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">def</span> <span class="nf">lambda_handler</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+</span><span class='line'>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Event: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">event</span><span class="p">))</span>
+</span><span class='line'>    <span class="n">dsn</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s">&#39;serialNumber&#39;</span><span class="p">]</span>
+</span><span class='line'>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Received trigger from device with dsn: &quot;</span> <span class="o">+</span> <span class="n">dsn</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">slack_message</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class='line'>        <span class="s">&#39;channel&#39;</span><span class="p">:</span> <span class="n">SLACK_CHANNEL</span><span class="p">,</span>
+</span><span class='line'>        <span class="s">&#39;parse&#39;</span><span class="p">:</span> <span class="s">&#39;full&#39;</span><span class="p">,</span>
+</span><span class='line'>        <span class="s">&#39;text&#39;</span><span class="p">:</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;@here DING DONG!!! Open door please. Triggered from 6th floor door bell.&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="n">HOOK_URL</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">slack_message</span><span class="p">))</span>
+</span><span class='line'>    <span class="k">try</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">response</span> <span class="o">=</span> <span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+</span><span class='line'>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Message posted to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">slack_message</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">])</span>
+</span><span class='line'>    <span class="k">except</span> <span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Request failed: </span><span class="si">%d</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">reason</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">except</span> <span class="n">URLError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Server connection failed: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">reason</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This is pretty much the gist of the function. We also encrypted the HOOK_URL using aws keys management service, but thats optional. AWS lambda iot sample function has instructions on how to do this.</p>
+
+<h4>Button setup</h4>
+
+<p>Once we have the certificate and private key, button can be setup by following these <a href="http://docs.aws.amazon.com/iot/latest/developerguide/configure-iot.html">instructions</a>.</p>
+
+<h4>Slack message</h4>
+
+<p><img class="left" src="http://codeforgood.github.io/images/doorbell/slack-message.png" title="Slack message" alt="slack-message"></p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Realtime Computation and Charting with Go and d3]]></title>
