@@ -4,7 +4,7 @@
   <title><![CDATA[Category: slack | Eden Space]]></title>
   <link href="http://codeforgood.github.io/blog/categories/slack/atom.xml" rel="self"/>
   <link href="http://codeforgood.github.io/"/>
-  <updated>2016-12-03T11:04:23-08:00</updated>
+  <updated>2016-12-03T22:21:48-08:00</updated>
   <id>http://codeforgood.github.io/</id>
   <author>
     <name><![CDATA[Sadish Ravi]]></name>
@@ -12,6 +12,273 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[ChatOps spin: Controlling EC2 instances via slack commands]]></title>
+    <link href="http://codeforgood.github.io/blog/2016/12/03/chatops-spin-controlling-ec2-instances-via-slack-commands/"/>
+    <updated>2016-12-03T17:01:39-08:00</updated>
+    <id>http://codeforgood.github.io/blog/2016/12/03/chatops-spin-controlling-ec2-instances-via-slack-commands</id>
+    <content type="html"><![CDATA[<p><a href="https://www.youtube.com/watch?v=NST3u-GjjFw">ChatOps</a> term mostly credited to Github is a way of integrating tools, operations, scripts and humans with a chat interface (Slack, HipChat etc&hellip;).</p>
+
+<p>At work we run some ec2 hosted tools for other non engineering teams. We don&rsquo;t have the need to run it 24*7, so it would be great to give the ability to users to spin up the instance and bring it down when needed to save costs. For some time engineering was doing this upon request, but this is something that could be easily automated. I was interested to see how this could be done via slack.</p>
+
+<p>After reading few articles writing bots using lambda, I decided to go with that.</p>
+
+<h3>How it works?</h3>
+
+<p><img class="left" src="/images/chatops/ec2-controller.png" title="&lsquo;chatops Architecture&rsquo; &lsquo;chatops&rsquo;" ></p>
+
+<h3>Deep dive</h3>
+
+<p>I decided to build this using lambda, rather than any other open source bot frameworks as we were trying to adopt usage of lambda internally for other purposes, due to its tight integration with aws services and no need to host anything (serverless).</p>
+
+<h4>Slack command</h4>
+
+<p>A Slack command can be created and tied to a url to which the data will be posted.</p>
+
+<h4>API gateway</h4>
+
+<p>In order to execute a lambda function upon a slack command, we need a API to which slack can send a get/post request. AWS makes it easier to create a API using API gateway that will invoke a particular lambda function when called.</p>
+
+<p>I am not going to go in details on how to create a API gateway and connect to a lambda function as these are explained in depth in <a href="http://docs.aws.amazon.com/apigateway/latest/developerguide/getting-started.html">AWS docs</a></p>
+
+<h4>lambda function</h4>
+
+<p>Although I started with a single lambda function that was responding to 3 different slack requests</p>
+
+<pre><code>- /ec2 status (GET call to know the status of the ec2 instance)
+- /ec2 start  (POST call to start the ec2 instance if not running)
+- /ec2 stop   (POST call to stop the ec2 instance if running)
+</code></pre>
+
+<p>soon I realized its not going to work as slack terminates outbound requests if it gets no response within 3 seconds. One solution was to split the response and the actual work. Getting a status of the instance could be done with in 3 seconds, but starting and stopping the instances are synchronous calls and could easily take more than 3 seconds.</p>
+
+<p>The first lambda function I wrote was a reception function whose only work was to ack the slack request from API gateway and respond with something meaningful. The reception function will in turn trigger a lambda worker function to do the actual work (Querying status, starting or stopping an ec2 instance)</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>reception function &ndash; receptor.py </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+</pre></td><td class='code'><pre><code class='py'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="kn">import</span> <span class="nn">json</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">boto3</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">SLACK_TOKEN</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="o">&lt;</span><span class="n">TOKEN</span><span class="o">&gt;&amp;</span><span class="n">rsquo</span><span class="p">;</span> <span class="c"># to ensure the request is coming from slack</span>
+</span><span class='line'><span class="n">SNS_TOPIC_ARN</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="o">&lt;</span><span class="n">ARN</span><span class="o">&gt;&amp;</span><span class="n">rsquo</span><span class="p">;</span> <span class="c"># Sns topic to which notification will be sent&lt;/p&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">def</span> <span class="nf">lambda_handler</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;token&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="o">!=</span> <span class="n">SLACK_TOKEN</span><span class="p">:</span>
+</span><span class='line'>    <span class="k">return</span> <span class="s">&#39;Unauthorized request. Check slack token passed&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;command&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>  <span class="o">!=</span> <span class="s">&#39;/EC2&#39;</span><span class="p">:</span>
+</span><span class='line'>    <span class="k">return</span> <span class="s">&#39;Invalid command. Check slack command passed&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">request</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;text&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+</span><span class='line'><span class="k">if</span> <span class="n">request</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;status&#39;</span><span class="p">,</span> <span class="s">&#39;start&#39;</span><span class="p">,</span> <span class="s">&#39;stop&#39;</span><span class="p">]:</span>
+</span><span class='line'>    <span class="k">return</span> <span class="s">&#39;Unknown request. Check slack command passed&#39;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">sns_client</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">client</span><span class="p">(</span><span class="s">&#39;sns&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="n">sns_client</span><span class="o">.</span><span class="n">publish</span><span class="p">(</span>
+</span><span class='line'>    <span class="n">TopicArn</span><span class="o">=</span><span class="n">SNS_TOPIC_ARN</span><span class="p">,</span>
+</span><span class='line'>    <span class="n">Message</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s">&#39;default&#39;</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">event</span><span class="p">)}),</span>
+</span><span class='line'>    <span class="n">MessageStructure</span><span class="o">=</span><span class="s">&#39;json&#39;</span>
+</span><span class='line'><span class="p">)</span>
+</span><span class='line'><span class="k">return</span> <span class="s">&#39;Will get back to you on that.&#39;</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>The function verifies if the request is from slack and checks the slack command that was issued. After checking the request, it sends a sns notification to a topic with the entire event data as message. The function gets back to the original request with a placeholder message. SNS is one easy way to chain lambda functions.</p>
+
+<p>A downstream worker lambda function was written which gets triggered when new message is sent to the above topic. The function will receive the entire message sent to sns topic. This message will include the original request that was received by the receptor function.</p>
+
+<p><div class='bogus-wrapper'><notextile><figure class='code'><figcaption><span>worker function &ndash; worker.py </span></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+</pre></td><td class='code'><pre><code class='py'><span class='line'><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="kn">import</span> <span class="nn">boto3</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">json</span>
+</span><span class='line'><span class="kn">import</span> <span class="nn">urllib2</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="n">region</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&gt;&amp;</span><span class="n">rsquo</span><span class="p">;</span>
+</span><span class='line'><span class="n">instance_id</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&gt;&amp;</span><span class="n">rsquo</span><span class="p">;</span>
+</span><span class='line'><span class="n">SLACK_TOKEN</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">lsquo</span><span class="p">;</span><span class="o">&amp;</span><span class="n">lt</span><span class="p">;</span><span class="o">&gt;&amp;</span><span class="n">rsquo</span><span class="p">;</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">def</span> <span class="nf">post_to_slack_webhook</span><span class="p">(</span><span class="n">response_url</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="k">try</span><span class="p">:</span>
+</span><span class='line'>    <span class="n">req</span> <span class="o">=</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span><span class="n">response_url</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">req</span><span class="o">.</span><span class="n">add_header</span><span class="p">(</span><span class="s">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s">&quot;application/json&quot;</span><span class="p">)</span>
+</span><span class='line'>    <span class="n">urllib2</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s">&#39;text&#39;</span><span class="p">:</span> <span class="n">text</span><span class="p">}))</span>
+</span><span class='line'><span class="k">except</span> <span class="n">urllib2</span><span class="o">.</span><span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span class='line'>    <span class="k">pass</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">h1</span><span class="o">&gt;</span><span class="n">handler</span> <span class="k">for</span> <span class="n">sns</span> <span class="n">notification</span> <span class="n">triggered</span> <span class="kn">from</span> <span class="nn">receptor</span> <span class="nn">lambda</span> <span class="nn">function</span><span class="o">&lt;/</span><span class="n">h1</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span><span class="k">def</span> <span class="nf">lambda_handler</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span><span class="o">&lt;/</span><span class="n">p</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">pre</span><span class="o">&gt;&lt;</span><span class="n">code</span><span class="o">&gt;</span><span class="n">message</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">event</span><span class="p">[</span><span class="s">&#39;Records&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;Sns&#39;</span><span class="p">][</span><span class="s">&#39;Message&#39;</span><span class="p">])</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">command</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;command&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+</span><span class='line'><span class="n">action</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;text&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+</span><span class='line'><span class="n">response_url</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;response_url&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">ec2</span> <span class="o">=</span> <span class="n">boto3</span><span class="o">.</span><span class="n">resource</span><span class="p">(</span><span class="s">&#39;ec2&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="n">instance</span> <span class="o">=</span> <span class="n">ec2</span><span class="o">.</span><span class="n">Instance</span><span class="p">(</span><span class="n">instance_id</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">if</span> <span class="n">action</span> <span class="o">==</span> <span class="s">&#39;status&#39;</span><span class="p">:</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">instance</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="s">&#39;Code&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">80</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">text</span> <span class="o">=</span>  <span class="s">&quot;Instance is currently stopped. To start issue /ec2 start&quot;</span>
+</span><span class='line'>    <span class="k">elif</span> <span class="n">instance</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="s">&#39;Code&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">64</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">text</span> <span class="o">=</span>  <span class="s">&quot;Instance is currently stopping. Check back in few minutes&quot;</span>
+</span><span class='line'>    <span class="k">elif</span> <span class="n">instance</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="s">&#39;Code&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">16</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">text</span> <span class="o">=</span>  <span class="s">&quot;Instance is currently running. To stop issue /ec2 stop&quot;</span>
+</span><span class='line'>    <span class="k">elif</span> <span class="n">instance</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="s">&#39;Code&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">text</span> <span class="o">=</span>  <span class="s">&quot;Instance is currently starting. Check back in few minutes&quot;</span>
+</span><span class='line'>    <span class="k">else</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">text</span> <span class="o">=</span> <span class="s">&quot;Instance is in unexpected state&quot;</span>
+</span><span class='line'>    <span class="n">post_to_slack_webhook</span><span class="p">(</span><span class="n">response_url</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+</span><span class='line'><span class="k">elif</span> <span class="n">action</span> <span class="o">==</span> <span class="s">&#39;start&#39;</span><span class="p">:</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">instance</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="s">&#39;Code&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">16</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">post_to_slack_webhook</span><span class="p">(</span><span class="n">response_url</span><span class="p">,</span> <span class="s">&#39;Instance already running&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">elif</span> <span class="n">instance</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="s">&#39;Code&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">post_to_slack_webhook</span><span class="p">(</span><span class="n">response_url</span><span class="p">,</span> <span class="s">&#39;Instance just booting up&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">else</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">instance</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</span><span class='line'>        <span class="n">instance</span><span class="o">.</span><span class="n">wait_until_running</span><span class="p">()</span>
+</span><span class='line'>        <span class="n">ec2</span><span class="o">.</span><span class="n">meta</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">associate_address</span><span class="p">(</span><span class="n">InstanceId</span><span class="o">=</span><span class="n">instance_id</span><span class="p">,</span> <span class="n">PublicIp</span><span class="o">=</span><span class="s">&#39;107.20.248.29&#39;</span><span class="p">)</span>
+</span><span class='line'>        <span class="n">post_to_slack_webhook</span><span class="p">(</span><span class="n">response_url</span><span class="p">,</span> <span class="s">&#39;Instance now running&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="k">elif</span> <span class="n">action</span> <span class="o">==</span> <span class="s">&#39;stop&#39;</span><span class="p">:</span>
+</span><span class='line'>    <span class="k">if</span> <span class="n">instance</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="s">&#39;Code&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">80</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">post_to_slack_webhook</span><span class="p">(</span><span class="n">response_url</span><span class="p">,</span> <span class="s">&#39;Instance already stopped&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">elif</span> <span class="n">instance</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="s">&#39;Code&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">64</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">post_to_slack_webhook</span><span class="p">(</span><span class="n">response_url</span><span class="p">,</span> <span class="s">&#39;Instance just shutting down&#39;</span><span class="p">)</span>
+</span><span class='line'>    <span class="k">else</span><span class="p">:</span>
+</span><span class='line'>        <span class="n">instance</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+</span><span class='line'>        <span class="n">instance</span><span class="o">.</span><span class="n">wait_until_stopped</span><span class="p">()</span>
+</span><span class='line'>        <span class="n">post_to_slack_webhook</span><span class="p">(</span><span class="n">response_url</span><span class="p">,</span> <span class="s">&#39;Instance stopped&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="k">else</span><span class="p">:</span>
+</span><span class='line'>    <span class="n">post_to_slack_webhook</span><span class="p">(</span><span class="n">response_url</span><span class="p">,</span> <span class="s">&#39;Invalid action requested!&#39;</span><span class="p">)</span>
+</span><span class='line'><span class="o">&lt;/</span><span class="n">code</span><span class="o">&gt;&lt;/</span><span class="n">pre</span><span class="o">&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">&lt;</span><span class="n">p</span><span class="o">&gt;</span>
+</span></code></pre></td></tr></table></div></figure></notextile></div></p>
+
+<p>The slack request also includes a response_url to which one can post a delayed response. The worker function after parsing the message, takes the appropriate action and responds back to the response_url with a appropriate text.</p>
+
+<h3>Slack interaction</h3>
+
+<p><img class="left" src="/images/chatops/ec2-status.png" title="&lsquo;ec2 status&rsquo; &lsquo;status&rsquo;" ></p>
+
+<h3>Credits</h3>
+
+<ul>
+<li><a href="https://www.pagerduty.com/blog/what-is-chatops/">So, What is ChatOps?</a></li>
+<li><a href="https://www.youtube.com/watch?v=NST3u-GjjFw">ChatOps at GitHub by Jesse Newland</a></li>
+<li><a href="https://speakerdeck.com/jnewland/chatops-at-github">ChatOps at GitHub</a></li>
+</ul>
+
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Iot bell: a doorbell using Aws iot button]]></title>

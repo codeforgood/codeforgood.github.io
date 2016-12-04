@@ -4,7 +4,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Eden Space</title>
+  <title>ChatOps spin: Controlling EC2 instances via slack commands - Eden Space</title>
   <meta name="author" content="Sadish Ravi">
 
   
@@ -16,7 +16,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://codeforgood.github.io">
+  <link rel="canonical" href="http://codeforgood.github.io/blog/2016/12/03/chatops-spin-controlling-ec2-instances-via-slack-commands">
   <link href="/favicon.png" type="image/png" rel="icon">
   <link href="/atom.xml" rel="alternate" title="Eden Space" type="application/atom+xml">
 
@@ -97,12 +97,8 @@
         <div id="content">
           <div class="row">
   <div class="page-content col-md-9">
-    <div class="blog-index">
+    <article class="hentry" role="article">
       
-      
-      
-        <article class="post">
-          
   <header class="page-header">
     
       <p class="meta text-muted text-uppercase">
@@ -121,18 +117,21 @@
 
 <span class="glyphicon glyphicon-calendar"></span> <time datetime="2016-12-03T17:01:39-08:00" pubdate data-updated="true">Dec 3<span>rd</span>, 2016</time>
         
-           | <a href="/blog/2016/12/03/chatops-spin-controlling-ec2-instances-via-slack-commands/#disqus_thread"
-             data-disqus-identifier="http://codeforgood.github.io/blog/2016/12/03/chatops-spin-controlling-ec2-instances-via-slack-commands/">Comments</a>
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://codeforgood.github.io">Comments</a>
         
       </p>
     
     
-      <h1 class="entry-title"><a href="/blog/2016/12/03/chatops-spin-controlling-ec2-instances-via-slack-commands/">ChatOps Spin: Controlling EC2 Instances via Slack Commands</a></h1>
+    <h1 class="entry-title">
+        ChatOps Spin: Controlling EC2 Instances via Slack Commands
+        
+    </h1>
     
   </header>
 
 
-  <div class="entry-content clearfix"><p><a href="https://www.youtube.com/watch?v=NST3u-GjjFw">ChatOps</a> term mostly credited to Github is a way of integrating tools, operations, scripts and humans with a chat interface (Slack, HipChat etc&hellip;).</p>
+<div class="entry-content clearfix"><p><a href="https://www.youtube.com/watch?v=NST3u-GjjFw">ChatOps</a> term mostly credited to Github is a way of integrating tools, operations, scripts and humans with a chat interface (Slack, HipChat etc&hellip;).</p>
 
 <p>At work we run some ec2 hosted tools for other non engineering teams. We don&rsquo;t have the need to run it 24*7, so it would be great to give the ability to users to spin up the instance and bring it down when needed to save costs. For some time engineering was doing this upon request, but this is something that could be easily automated. I was interested to see how this could be done via slack.</p>
 
@@ -364,146 +363,16 @@
 </ul>
 
 </div>
-  
-  
 
 
-        </article>
-      
-      
-        <article class="post">
+      <footer>
+        <p class="meta text-muted">
           
-  <header class="page-header">
-    
-      <p class="meta text-muted text-uppercase">
-        
-
-
-
-
-
-
-
-
-
-
-
-
-<span class="glyphicon glyphicon-calendar"></span> <time datetime="2016-12-02T20:51:11-08:00" pubdate data-updated="true">Dec 2<span>nd</span>, 2016</time>
-        
-           | <a href="/blog/2016/12/02/iot-doorbell-building-a-doorbell-using-aws-iot-button/#disqus_thread"
-             data-disqus-identifier="http://codeforgood.github.io/blog/2016/12/02/iot-doorbell-building-a-doorbell-using-aws-iot-button/">Comments</a>
-        
-      </p>
-    
-    
-      <h1 class="entry-title"><a href="/blog/2016/12/02/iot-doorbell-building-a-doorbell-using-aws-iot-button/">Iot Bell: A Doorbell Using Aws Iot Button</a></h1>
-    
-  </header>
-
-
-  <div class="entry-content clearfix"><p>A Doorbell for 20$ that slacks instead of ringing. This idea was given birth due to many reasons</p>
-
-<pre><code>- Our office floor was missing a doorbell for a long time
-- People with out key fob had to tail gate others after a long wait
-- We wanted to put to a use a spare aws iot button
-</code></pre>
-
-<h3>How it works?</h3>
-
-<p><img class="left" src="/images/doorbell/doorbell-arch-diag.png" title="Doorbell Architecture" alt="doorbell"></p>
-
-<h3>Deep dive</h3>
-
-<h4>iot Button</h4>
-
-<p><a href="https://aws.amazon.com/iotbutton/">AWS iot button</a> is a simple device that triggers an  event upon clicking. Pretty much any piece of code/action can be executed by handling this event. <a href="https://www.amazon.com/dp/B01C7WE5WM">purchase aws iot button here</a>.</p>
-
-<h4>Slack webhook</h4>
-
-<p>We will be using a slack webhook url to post a message to slack. A webhook url can be configured and obtained from slack settings.</p>
-
-<h4>Lambda function</h4>
-
-<p>This a very simple python script that gets executed upon an iot event and posts a message to a slack channel.</p>
-
-<p>While creating a lambda function, select the trigger to be AWS IoT and enter the button device serial number to generate certificate and key. This will be used later to setup the button.</p>
-
-<p>The lambda function itself is pretty straightforward</p>
-
-<figure class='code'><figcaption><span>iotbell function - iotbell.py </span></figcaption>
-<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-</pre></td><td class='code'><pre><code class='py'><span class='line'><span class="n">HOOK_URL</span> <span class="o">=</span> <span class="s">&#39;&lt;webhook url from slack&gt;&#39;</span>
-</span><span class='line'><span class="n">SLACK_CHANNEL</span> <span class="o">=</span> <span class="s">&#39;&lt;slackchannel to post&gt;&#39;</span>
-</span><span class='line'>
-</span><span class='line'><span class="k">def</span> <span class="nf">lambda_handler</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
-</span><span class='line'>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Event: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">event</span><span class="p">))</span>
-</span><span class='line'>    <span class="n">dsn</span> <span class="o">=</span> <span class="n">event</span><span class="p">[</span><span class="s">&#39;serialNumber&#39;</span><span class="p">]</span>
-</span><span class='line'>    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Received trigger from device with dsn: &quot;</span> <span class="o">+</span> <span class="n">dsn</span><span class="p">)</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">slack_message</span> <span class="o">=</span> <span class="p">{</span>
-</span><span class='line'>        <span class="s">&#39;channel&#39;</span><span class="p">:</span> <span class="n">SLACK_CHANNEL</span><span class="p">,</span>
-</span><span class='line'>        <span class="s">&#39;parse&#39;</span><span class="p">:</span> <span class="s">&#39;full&#39;</span><span class="p">,</span>
-</span><span class='line'>        <span class="s">&#39;text&#39;</span><span class="p">:</span> <span class="s">&quot;</span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="s">&#39;@here DING DONG!!! Open door please. Triggered from 6th floor door bell.&#39;</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'>    <span class="n">req</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="n">HOOK_URL</span><span class="p">,</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">slack_message</span><span class="p">))</span>
-</span><span class='line'>    <span class="k">try</span><span class="p">:</span>
-</span><span class='line'>        <span class="n">response</span> <span class="o">=</span> <span class="n">urlopen</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
-</span><span class='line'>        <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-</span><span class='line'>        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Message posted to </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">slack_message</span><span class="p">[</span><span class="s">&#39;channel&#39;</span><span class="p">])</span>
-</span><span class='line'>    <span class="k">except</span> <span class="n">HTTPError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span class='line'>        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Request failed: </span><span class="si">%d</span><span class="s"> </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">code</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">reason</span><span class="p">)</span>
-</span><span class='line'>    <span class="k">except</span> <span class="n">URLError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-</span><span class='line'>        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Server connection failed: </span><span class="si">%s</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">e</span><span class="o">.</span><span class="n">reason</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>This is pretty much the gist of the function. We also encrypted the HOOK_URL using aws keys management service, but thats optional. AWS lambda iot sample function has instructions on how to do this.</p>
-
-<h4>Button setup</h4>
-
-<p>Once we have the certificate and private key, button can be setup by following these <a href="http://docs.aws.amazon.com/iot/latest/developerguide/configure-iot.html">instructions</a>.</p>
-
-<h4>Slack message</h4>
-
-<p><img class="left" src="/images/doorbell/slack-message.png" title="Slack message" alt="slack-message"></p>
-</div>
-  
   
 
+<span class="glyphicon glyphicon-user"></span> <span class="byline author vcard">Posted by <span class="fn">Sadish Ravi</span></span>
 
-        </article>
-      
-      
-        <article class="post">
           
-  <header class="page-header">
-    
-      <p class="meta text-muted text-uppercase">
-        
 
 
 
@@ -516,268 +385,62 @@
 
 
 
-<span class="glyphicon glyphicon-calendar"></span> <time datetime="2014-06-21T12:23:04-07:00" pubdate data-updated="true">Jun 21<span>st</span>, 2014</time>
-        
-           | <a href="/blog/2014/06/21/realtime-computation-and-charting-with-go/#disqus_thread"
-             data-disqus-identifier="http://codeforgood.github.io/blog/2014/06/21/realtime-computation-and-charting-with-go/">Comments</a>
-        
-      </p>
-    
-    
-      <h1 class="entry-title"><a href="/blog/2014/06/21/realtime-computation-and-charting-with-go/">Realtime Computation and Charting With Go and D3</a></h1>
-    
-  </header>
-
-
-  <div class="entry-content clearfix"><p>Realtime web systems are always fun and challenging to build. To try my hands on this, I worked with a team and built a  realtime student assessment metrics dashboard during a 2 days hackathon. We built this using go, reveal, redis and d3.</p>
-
-<h4>What did we build?</h4>
-
-<p>At my current work, I have worked on building student assessment data processing systems. These are mostly batch based systems and the delay associated with them usually works out fine for our clients. But there are still unexplored use cases for realtime computations in education.</p>
-
-<p>The system that we built listens to a realtime feed (student assessment information), does various computations/aggregations in parallel and pushes the result to a result queue. The web socket application listens to this computation result feed and updates the dashboard in realtime</p>
-
-<h4>Parts of the system</h4>
-
-<h5>Realtime feed</h5>
-
-<p>we simulated a realtime feed of student assessment information using go. A goroutine reads a csv file and sends data to a go source feed channel at regular intervals</p>
-
-<h5>Computations</h5>
-
-<p>Bunch of goroutines listens to the above channel and performs some computation on the record in parallel. These computaitons are usually dependent on the computation result till now. We can do this either by storing the result in database temporarily or using a closure to keep track of result till now. Some calculations we implemented were</p>
-
-<pre><code>- Average score by school
-- Top performing schools in a district
-- Top performers in a grade across schools in a district
-- ....
-</code></pre>
-
-<p>Each of the above calculation was implemented as a goroutine and they push the result to a result channel as string. These routines listens to the source feed channel and runs as long the source closes it channel</p>
-
-<h5>Aggregator</h5>
-
-<p>Aggregator can be seen as the main routine which initiated all the above computation routines and listens for results on the output channel for each of the routines. The aggregator does 2 things</p>
-
-<pre><code>- publishes the current result from a computation to its own redis queue
-- Appends the result to a snapshot result list in redis.This is needed for initial state of the chart up on loading
-</code></pre>
-
-<h5>Socket server</h5>
-
-<p>The socket server was built using go and reveal framework. Its a very simple endpoint, which subscribes to each of the above redis computation queue and emits the data up the stack to browser as a message tagged with the chart on which it needs to be shown</p>
-
-<h5>D3 charts</h5>
-
-<p>The dashboard ui is built using d3 charts and each of the chart listens to a particular message on the socket connection and redraws themselves with new data</p>
-
-<h4>Putting together</h4>
-
-<p><img class="left" src="/images/Dash/dash-arch.jpg" title="Dash Architecture" alt="Dash"></p>
-</div>
-  
-  
-
-
-        </article>
-      
-      
-        <article class="post">
+<span class="glyphicon glyphicon-calendar"></span> <time datetime="2016-12-03T17:01:39-08:00" pubdate data-updated="true">Dec 3<span>rd</span>, 2016</time>
           
-  <header class="page-header">
-    
-      <p class="meta text-muted text-uppercase">
+
+<span class="glyphicon glyphicon-tags"></span>&nbsp;
+<span class="categories">
+  
+    <a class='category' href='/blog/categories/apigateway/'>apigateway</a>, <a class='category' href='/blog/categories/aws/'>aws</a>, <a class='category' href='/blog/categories/chatops/'>chatops</a>, <a class='category' href='/blog/categories/ec2/'>ec2</a>, <a class='category' href='/blog/categories/lambda/'>lambda</a>, <a class='category' href='/blog/categories/slack/'>slack</a>
+  
+</span>
+
+
+        </p>
         
-
-
-
-
-
-
-
-
-
-
-
-
-<span class="glyphicon glyphicon-calendar"></span> <time datetime="2014-06-07T13:44:55-07:00" pubdate data-updated="true">Jun 7<span>th</span>, 2014</time>
-        
-           | <a href="/blog/2014/06/07/trying-my-hands-on-golang-exiting-language/#disqus_thread"
-             data-disqus-identifier="http://codeforgood.github.io/blog/2014/06/07/trying-my-hands-on-golang-exiting-language/">Comments</a>
-        
-      </p>
-    
-    
-      <h1 class="entry-title"><a href="/blog/2014/06/07/trying-my-hands-on-golang-exiting-language/">Hands on Golang</a></h1>
-    
-  </header>
-
-
-  <div class="entry-content clearfix"><p>I am starting to learn Go and I feel the best way to learn is by sharing. Lets go through a simple example to demonstrate the power of Go</p>
-
-<h5>Problem &ndash; Sum of numbers from 1 to N</h5>
-
-<p>To explore the power of Go we will not use <a href="http://en.wikipedia.org/wiki/1_%2B_2_%2B_3_%2B_4_%2B_%E2%8B%AF" title="Summation Series">Summation series</a></p>
-
-<p>Typical way to sum 1 to N numbers in Python</p>
-
-<figure class='code'><figcaption><span>Sum of numbers from 1 to 99 in python - sum.go </span></figcaption>
-<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="nx">def</span> <span class="nx">sum</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">):</span>
-</span><span class='line'>    <span class="nx">sum</span> <span class="p">=</span> <span class="mi">0</span>
-</span><span class='line'>    <span class="k">for</span> <span class="nx">i</span> <span class="nx">in</span> <span class="k">range</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span> <span class="nx">b</span><span class="p">):</span>
-</span><span class='line'>        <span class="nx">sum</span> <span class="o">+=</span> <span class="nx">i</span>
-</span><span class='line'>    <span class="k">return</span> <span class="nx">sum</span>
-</span><span class='line'>
-</span><span class='line'><span class="nx">print</span> <span class="nx">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>The above same problem when translated to Go looks like this</p>
-
-<figure class='code'><figcaption><span>Sum of numbers from 1 to 99 in Go (serial version) - sum_serial.go </span></figcaption>
-<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="kn">package</span> <span class="nx">main</span>
-</span><span class='line'>
-</span><span class='line'><span class="kn">import</span> <span class="s">&quot;fmt&quot;</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">func</span> <span class="nx">sum</span><span class="p">(</span><span class="nx">a</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">b</span> <span class="kt">int</span><span class="p">)</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">sum</span> <span class="o">:=</span> <span class="mi">0</span>
-</span><span class='line'>    <span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="nx">a</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">b</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
-</span><span class='line'>        <span class="nx">sum</span> <span class="o">+=</span> <span class="nx">i</span>
-</span><span class='line'>    <span class="p">}</span>
-</span><span class='line'>    <span class="k">return</span> <span class="nx">sum</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">result</span> <span class="o">:=</span> <span class="nx">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
-</span><span class='line'>    <span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">result</span><span class="p">)</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<p>Both the above solutions has linear complexity &ndash; O(n), runs in a single thread What if we want to sum from 1 to 1 million ???</p>
-
-<p>Go provides a way to do this computation much faster and easier using <a href="https://gobyexample.com/goroutines">goroutines</a> and <a href="https://gobyexample.com/channels">channels</a></p>
-
-<pre><code>- The above sum function can be changed to return a channel with a result once available
-- The main method can fork multiple sum methods as goroutines asking to sum different ranges
-- The main method will grab the results from the channels and will return the sum
-</code></pre>
-
-<p>Theoretically, If we divide the array into 2 halves and sum using dedicated goroutines, we can get a speed up of twice, assuming multiple cores are available to run the routines in parallel</p>
-
-<p>The below go snippet shows the usage of goroutines and channels to achieve parallel computation</p>
-
-<figure class='code'><figcaption><span>Sum of numbers from 1 to 99 in Go (parallel version) - sum_parallel.go </span></figcaption>
-<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-<span class='line-number'>2</span>
-<span class='line-number'>3</span>
-<span class='line-number'>4</span>
-<span class='line-number'>5</span>
-<span class='line-number'>6</span>
-<span class='line-number'>7</span>
-<span class='line-number'>8</span>
-<span class='line-number'>9</span>
-<span class='line-number'>10</span>
-<span class='line-number'>11</span>
-<span class='line-number'>12</span>
-<span class='line-number'>13</span>
-<span class='line-number'>14</span>
-<span class='line-number'>15</span>
-<span class='line-number'>16</span>
-<span class='line-number'>17</span>
-<span class='line-number'>18</span>
-<span class='line-number'>19</span>
-<span class='line-number'>20</span>
-<span class='line-number'>21</span>
-<span class='line-number'>22</span>
-<span class='line-number'>23</span>
-<span class='line-number'>24</span>
-</pre></td><td class='code'><pre><code class='go'><span class='line'><span class="kn">package</span> <span class="nx">main</span>
-</span><span class='line'>
-</span><span class='line'><span class="kn">import</span> <span class="s">&quot;fmt&quot;</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">func</span> <span class="nx">sum</span><span class="p">(</span><span class="nx">start</span> <span class="kt">int</span><span class="p">,</span> <span class="nx">end</span> <span class="kt">int</span><span class="p">)</span> <span class="o">&lt;-</span><span class="kd">chan</span> <span class="kt">int</span><span class="p">{</span>
-</span><span class='line'>    <span class="nx">out</span> <span class="o">:=</span> <span class="nb">make</span><span class="p">(</span><span class="kd">chan</span> <span class="kt">int</span><span class="p">)</span>
-</span><span class='line'>    <span class="c1">//goroutine</span>
-</span><span class='line'>    <span class="k">go</span> <span class="kd">func</span><span class="p">(){</span>
-</span><span class='line'>        <span class="nx">sum</span> <span class="o">:=</span> <span class="mi">0</span>
-</span><span class='line'>        <span class="k">for</span> <span class="nx">i</span> <span class="o">:=</span> <span class="nx">start</span><span class="p">;</span> <span class="nx">i</span> <span class="p">&lt;</span> <span class="nx">end</span><span class="p">;</span> <span class="nx">i</span><span class="o">++</span> <span class="p">{</span>
-</span><span class='line'>            <span class="nx">sum</span> <span class="o">+=</span> <span class="nx">i</span>
-</span><span class='line'>        <span class="p">}</span>
-</span><span class='line'>        <span class="nx">out</span> <span class="o">&lt;-</span> <span class="nx">sum</span>
-</span><span class='line'>        <span class="nb">close</span><span class="p">(</span><span class="nx">out</span><span class="p">)</span>
-</span><span class='line'>    <span class="p">}()</span>
-</span><span class='line'>    <span class="k">return</span> <span class="nx">out</span>
-</span><span class='line'><span class="p">}</span>
-</span><span class='line'>
-</span><span class='line'><span class="kd">func</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
-</span><span class='line'>    <span class="nx">c1</span> <span class="o">:=</span> <span class="nx">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span> <span class="c1">// call to sum returns immediately with a channel</span>
-</span><span class='line'>    <span class="nx">c2</span> <span class="o">:=</span> <span class="nx">sum</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
-</span><span class='line'>    <span class="nx">sum_first_half</span><span class="p">,</span> <span class="nx">sum_second_half</span> <span class="o">:=</span> <span class="o">&lt;-</span><span class="nx">c1</span><span class="p">,</span> <span class="o">&lt;-</span><span class="nx">c2</span>
-</span><span class='line'>    <span class="nx">fmt</span><span class="p">.</span><span class="nx">Println</span><span class="p">(</span><span class="nx">sum_first_half</span> <span class="o">+</span> <span class="nx">sum_second_half</span><span class="p">)</span>
-</span><span class='line'><span class="p">}</span>
-</span></code></pre></td></tr></table></div></figure>
-
-
-<hr />
-
-<h5>References</h5>
-
-<p>Really interesting article about why <a href="http://dave.cheney.net/2014/06/07/five-things-that-make-go-fast">Go is faster than other languages</a></p>
+          <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://codeforgood.github.io/blog/2016/12/03/chatops-spin-controlling-ec2-instances-via-slack-commands/" data-via="sadishravi" data-counturl="http://codeforgood.github.io/blog/2016/12/03/chatops-spin-controlling-ec2-instances-via-slack-commands/" >Tweet</a>
+  
+  
+  <div class="g-plusone" data-size="small"></div>
+  
+  
+    <div class="fb-like" data-send="true" data-width="450" data-show-faces="false"></div>
+  
 </div>
-  
-  
 
-
-        </article>
-      
-    </div>
-
-    <ul class="pager">
-      
-        <li class="previous disabled"><a href="#">&larr;&nbsp;Older</a></li>
-      
-      <li><a href="/blog/archives">Blog Archives</a></li>
-      
-        <li class="next disabled"><a href="#">Newer&nbsp;&rarr;</a></li>
-      
-    </ul>
+        
+        
+          <ul class="meta text-muted pager">
+            
+            <li class="previous"><a href="/blog/2016/12/02/iot-doorbell-building-a-doorbell-using-aws-iot-button/" title="Previous Post: Iot bell: a doorbell using Aws iot button">&laquo; Iot bell: a doorbell using Aws iot button</a></li>
+            
+            
+          </ul>
+        
+      </footer>
+    </article>
+    
+      <section>
+        <h1>Comments</h1>
+        <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+      </section>
+    
   </div>
 
   
-    <aside class="sidebar col-md-3">
-      
-        <section class="panel panel-default">
+  <aside class="sidebar col-md-3">
+    
+      <section class="panel panel-default">
   <div class="panel-heading">
     <h3 class="panel-title">Recent Posts</h3>
   </div>
   
   <div id="recent_posts" class="list-group">
     
-    <a class="list-group-item " href="/blog/2016/12/03/chatops-spin-controlling-ec2-instances-via-slack-commands/">ChatOps Spin: Controlling EC2 Instances via Slack Commands</a>
+    <a class="list-group-item active" href="/blog/2016/12/03/chatops-spin-controlling-ec2-instances-via-slack-commands/">ChatOps Spin: Controlling EC2 Instances via Slack Commands</a>
     
     <a class="list-group-item " href="/blog/2016/12/02/iot-doorbell-building-a-doorbell-using-aws-iot-button/">Iot Bell: A Doorbell Using Aws Iot Button</a>
     
@@ -804,8 +467,8 @@
 
 
 
-      
-    </aside>
+    
+  </aside>
   
 </div>
 
@@ -831,7 +494,10 @@
       var disqus_shortname = 'codeforgood';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://codeforgood.github.io/blog/2016/12/03/chatops-spin-controlling-ec2-instances-via-slack-commands/';
+        var disqus_url = 'http://codeforgood.github.io/blog/2016/12/03/chatops-spin-controlling-ec2-instances-via-slack-commands/';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
